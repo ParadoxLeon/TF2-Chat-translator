@@ -48,15 +48,15 @@ namespace tf2translator.Controllers
                 var (rawStrings, chatTypes, names, rawMessage) = LineCleaner(lines);
 
                 for (var i = 0; i < rawStrings.Count; i++)
-                {  
-                        logs.AddLast(new Chat(rawStrings[i], chatTypes[i], names[i], rawMessage[i]));
+                {
+                    logs.AddLast(new Chat(rawStrings[i], chatTypes[i], names[i], rawMessage[i]));
                 }
 
                 /* if logs where found in the file. */
                 if(logs.Last != null)
                 {
                     var addList = new List<Log>();
-                    
+
                     /*
                         loop backwards over the array with the discovered logs.
                         Check for each node if the node is identical to the last added node in the system.
@@ -77,7 +77,7 @@ namespace tf2translator.Controllers
                             break;
                         }
                     }
-                    
+
                     foreach(var log in addList)
                     {
                         SaveLog(log);
@@ -94,12 +94,12 @@ namespace tf2translator.Controllers
 
                         Chats.Insert(0, chat);
 
-                        if (chat.Translation.Message == chat.Message || chat.Translation.Message == "---") return;                        
-                        
+                        if (chat.Translation.Message == chat.Message || chat.Translation.Message == "---") return;
+
                         break;
                 }
             }
-            
+
             /*
              * Compares 2 nodes based on value and if necessary, the 3 previous logs.
              */
@@ -109,7 +109,7 @@ namespace tf2translator.Controllers
                 var newNodeRelative = newNode;
 
                 if (lastAddedNodeRelative.Value.RawString != newNodeRelative.Value.RawString) return false;
-                
+
                 for (var i = 0; i < 3; i++)
                 {
                     lastAddedNodeRelative = lastAddedNodeRelative.Previous;
@@ -118,7 +118,7 @@ namespace tf2translator.Controllers
                     if (lastAddedNodeRelative == null || newNodeRelative == null) return true;
                     if (lastAddedNodeRelative.Value.RawString != newNodeRelative.Value.RawString) return false;
                 }
-                
+
                 return true;
             }
         }
@@ -209,9 +209,11 @@ namespace tf2translator.Controllers
             var returnNames = new List<string>();
             var returnMessages = new List<string>();
 
+            var filterList = new List<string> { "(TEAM)", "*DEAD*" };
+
             foreach (var l in lines)
             {
-                /* filter out the massage */
+                /* filter out the message */
                 if (!l.Contains(" :  "))
                     continue;
 
@@ -224,15 +226,14 @@ namespace tf2translator.Controllers
                 // use regular expression to remove the date and time pattern
                 namePart = Regex.Replace(namePart, @"\d{1,2}/\d{1,2} \d{1,2}:\d{1,2}:\d{1,2}", "").Trim();
 
-                //Comment when testing
-                if (namePart.StartsWith("(TEAM)"))
-                    namePart = namePart.Substring(6).Trim();
+                foreach (var filter in filterList)
+                {
+                    if (namePart.StartsWith(filter))
+                    {
+                        namePart = namePart.Substring(filter.Length).Trim();
+                    }
+                }
 
-
-                /* removal of [DEAD] */
-                if (namePart.EndsWith("[DEAD]"))
-                    namePart = namePart.Substring(0, namePart.Length - 6).Trim();
-              
                 returnRawStrings.Add(l);
                 returnChatTypes.Add(chatType);
                 returnNames.Add(namePart);
